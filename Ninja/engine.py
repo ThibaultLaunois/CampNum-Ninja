@@ -17,6 +17,8 @@ class Engine:
         self.gameState = GameState.MENU
         self.mediapipeProcessor = mediapipeProcessor
         self.objects = []
+        self.validRadius = 5
+        self.imageShape = False
 
 
     def initCamera(self):
@@ -78,6 +80,9 @@ class Engine:
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
+        if not self.imageShape:
+            self.image_height, self.image_width, _ = image.shape
+            self.imageShape = True
         
         # Generate object maybe
 
@@ -85,3 +90,38 @@ class Engine:
         self.interface.drawInterface(image)
 
     def decideIfDrawObject(self):
+        pass
+
+    def drawObjects(self,image):
+        for object in self.objects:
+            image = cv2.circle(image, center=object.position, 
+                               radius=object.radius, 
+                               color=object.color, 
+                               thickness=-1)
+        return image
+
+    def detectTouch(self, right_landmarks, left_landmarks):
+        for ind, object in enumerate(self.objects):
+            ind_to_delete = []
+            if right_landmarks:
+                x_loc = right_landmarks.landmark[9].x * self.image_width
+                y_loc = right_landmarks.landmark[9].y * self.image_height
+                if ((object.x - object.radius < x_loc) &
+                    (object.x + object.radius > x_loc) &
+                    (object.y - object.radius < y_loc) &
+                    (object.y + object.radius > y_loc)):
+                    self.game.updateScore(5)
+                    ind_to_delete.append(ind)
+
+            if left_landmarks:
+                x_loc = right_landmarks.landmark[9].x * self.image_width
+                y_loc = right_landmarks.landmark[9].y * self.image_height
+                if ((object.x - object.radius < x_loc) &
+                    (object.x + object.radius > x_loc) &
+                    (object.y - object.radius < y_loc) &
+                    (object.y + object.radius > y_loc)):
+                    self.game.updateScore(5)
+                    ind_to_delete.append(ind)
+
+            for index in sorted(ind_to_delete, reverse=True):
+                del self.objects[index]
