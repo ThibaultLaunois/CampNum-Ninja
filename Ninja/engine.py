@@ -14,7 +14,6 @@ class Engine:
         self.camera = cv2.VideoCapture(0)
         self.gameState = GameState.MENU
         self.objects = []
-
     
     def startGame(self):
         self.gameOn = GameState.INGAME
@@ -31,6 +30,10 @@ class Engine:
 
     def updateInterface(self):
         pass
+    
 
     def stopCamera(self):
         self.camera.release()
+        
+    def closeWindows(self):
+        cv2.destroyAllWindows()
