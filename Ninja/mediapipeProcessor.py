@@ -13,16 +13,31 @@ class mediapipeProcessor:
 
 
     def get_body_landmarks(self, image):
+        '''
+        Gets the landmarks for the body
+        
+        :param image: the image used to find the landmarks
+        '''
         results = self.model.process(image) 
         return results.pose_landmarks
     
 
     def get_right_hand_landmarks(self, image):
+        '''
+        Gets the landmarks for the right hand
+        
+        :param image: the image used to find the landmarks
+        '''        
         results = self.model.process(image) 
         return results.right_hand_landmarks
     
 
     def get_left_hand_landmarks(self, image):
+        '''
+        Gets the landmarks for the left hand
+        
+        :param image: the image used to find the landmarks
+        '''     
         results = self.model.process(image) 
         return results.left_hand_landmarks
     
@@ -30,7 +45,9 @@ class mediapipeProcessor:
     def format_landmarks(self, landmarks_in):
         """
         Transforms landmarks obtained from an image to a dictionary containing the index of 
-        the landmarks and their corresponding coordinates.
+        the landmarks and their corresponding coordinates
+
+        :param landmarks_in: the landmarks to transform into the dictionary
         """
         landmarks = {
             "index": [],
@@ -50,7 +67,10 @@ class mediapipeProcessor:
 
     def get_hand_landmarks_from_folder(self, source_path, target_path):
         """
-        
+        Find the landmarks for each hand seen in a folder of images
+
+        :param source_path: the folder containing the images
+        :param target_path: the folder to save the landmark information
         """
         data = {
             "filename": [],
@@ -79,11 +99,17 @@ class mediapipeProcessor:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
 
-    def landmarks_to_array(self, landmarks):
+    def landmarks_to_array(self, landmarks_dict):
+        '''
+        Converts landmark dictionary to landmark array
+        
+        :param landmarks_dict: dictionary containing information about the
+                               landmarks
+        '''
         res = np.zeros(shape=(33,3))
-        res[:,0] = landmarks["X"]
-        res[:,1] = landmarks["Y"]
-        res[:,2] = landmarks["Z"]
+        res[:,0] = landmarks_dict["X"]
+        res[:,1] = landmarks_dict["Y"]
+        res[:,2] = landmarks_dict["Z"]
         return res
 
     
