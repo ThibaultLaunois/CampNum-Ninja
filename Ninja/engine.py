@@ -29,12 +29,7 @@ class Engine:
         '''
         self.camera = cv2.VideoCapture(0)
         self.fps = self.camera.get(cv2.CAP_PROP_FPS)
-        self.nameWindow = "Press q to exit"
-        cv2.namedWindow(self.nameWindow)
-        cv2.setMouseCallback(self.nameWindow, self.mouse_click)
-        self.windowWidth = 80
-        self.counterOn = False
-
+        cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
 
     def mouse_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -85,10 +80,17 @@ class Engine:
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
         
-        # Generate object maybe
+        # Update position of objects
+        self.updateObjectPositions()
 
-        cv2.imshow(self.nameWindow, image)
-        self.interface.drawInterface(image)
+        # Randomly generate object (probability = 0.05 * difficulty)
+        self.RandomAddObject()
+        
+        # Add object to current image
+        image = self.drawObjects(image)
+
+        # Add interface on top of current image and show the result
+        self.interface.drawInterface(image, self.game.getScore())
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
@@ -130,9 +132,3 @@ class Engine:
 
             for index in sorted(ind_to_delete, reverse=True):
                 del self.objects[index]
-        for object in self.objects:
-            image = cv2.circle(image, center=object.position, 
-                            radius=object.radius, 
-                            color=object.color, 
-                            thickness=-1)
-        return image

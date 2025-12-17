@@ -1,6 +1,6 @@
 from Ninja.engine import Engine
 from Ninja.game import Game
-from Ninja.mediaPipeProcessor import MediaPipeProcessor
+from Ninja.mediapipeProcessor import mediapipeProcessor
 from Ninja.interface import Interface
 import cv2
 
@@ -8,7 +8,7 @@ import cv2
 game = Game()
 interface = Interface()
 engine = Engine(game, interface)
-mediaPipeProcessor = MediaPipeProcessor()
+mediaPipeProcessor = mediapipeProcessor()
 
 # Open camera
 engine.initCamera()
