@@ -1,14 +1,14 @@
 import numpy as np
 
 class Object:
-    def __init__(self, type, vitesse=(0,20), acceleration =(0,0), taille=5, color=(0,0,0)):
+    def __init__(self, type, vitesse=(0,20), acceleration =(0,0), radius=5, color=(0,0,0)):
         width_image = 800
         self.fps = 30
         self.position = (np.random.randint(0, width_image), 0)
         self.type = type
         self.vitesse = vitesse
         self.acceleration = acceleration
-        self.taille = taille
+        self.radius = radius
         self.color = color
 
 
