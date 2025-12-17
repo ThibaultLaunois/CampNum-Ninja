@@ -24,13 +24,13 @@ class Game:
         :getDifficulty:
     """
 
-    def __init__(self):
-        self.score = 0
-        self.duration = 0
-        self.gameMode = gameMode.MATCH
-        self.maxObjects = 1
-        self.difficulty = 1
-        self.detectionRadius = 1
+    def __init__(self, score=0, duration=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
+        self.score = score
+        self.duration = duration
+        self.gameMode = gameMode
+        self.maxObjects = maxObjects
+        self.difficulty = difficulty
+        self.detectionRadius = detectionRadius
 
     def increaseDifficulty(self):
         """

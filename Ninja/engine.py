@@ -2,6 +2,8 @@ from Ninja.game import Game
 from Ninja.gameState import GameState
 from Ninja.interface import Interface
 from Ninja.mediapipeProcessor import mediapipeProcessor
+from Ninja.Object import Object
+import random
 
 import cv2
 
@@ -12,7 +14,7 @@ class Engine:
     """
 
     def __init__(self, game:Game, interface:Interface, mediapipeProcessor:mediapipeProcessor):
-        self.game = Game
+        self.game = Game()
         self.interface = interface
         self.gameState = GameState.MENU
         self.mediapipeProcessor = mediapipeProcessor
@@ -54,6 +56,7 @@ class Engine:
 
     def startGame(self):
         self.gameOn = GameState.INGAME
+        self.game = Game()
 
     def endGame(self):
         self.gameOn = GameState.RECAPSCORE
@@ -63,10 +66,7 @@ class Engine:
 
     def updateObjectPositions(self):
         for _, i in enumerate(self.objects):
-            self.objects[i].updatePosition()
-
-    def updateInterface(self):
-        pass
+            self.objects[i].updatePos()
     
     def stopCamera(self):
         self.camera.release()
@@ -75,13 +75,34 @@ class Engine:
         cv2.destroyAllWindows()
 
     def gameLoop(self):
+
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
         
-        # Generate object maybe
+        # Update position of objects
+        self.updateObjectPositions()
 
-        cv2.imshow(self.nameWindow, image)
-        self.interface.drawInterface(image)
+        # Randomly generate object (probability = 0.05 * difficulty)
+        self.RandomAddObject()
+        
+        # Add object to current image
+        image = self.drawObjects(image)
 
-    def decideIfDrawObject(self):
+        # Add interface on top of current image and show the result
+        self.interface.drawInterface(image, self.game.getScore())
+
+    def RandomAddObject(self):
+        x = random.random() #between 0 and 1
+        p = 0.05 * self.game.getDifficulty()
+        if x < p:
+            obj = Object()
+            self.objects.append(obj)
+
+    def drawObjects(self,image):
+        for object in self.objects:
+            image = cv2.circle(image, center=object.position, 
+                            radius=object.radius, 
+                            color=object.color, 
+                            thickness=-1)
+        return image
