@@ -1,4 +1,4 @@
-from gameMode import gameMode
+from Ninja.gameMode import gameMode
 
 class Game:
     """
