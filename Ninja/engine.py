@@ -2,6 +2,7 @@ from Ninja.game import Game
 from Ninja.gameState import GameState
 from Ninja.interface import Interface
 from Ninja.mediapipeProcessor import mediapipeProcessor
+
 import cv2
 
 
@@ -10,10 +11,11 @@ class Engine:
     
     """
 
-    def __init__(self, game:Game, interface:Interface):
+    def __init__(self, game:Game, interface:Interface, mediapipeProcessor:mediapipeProcessor):
         self.game = Game
         self.interface = interface
         self.gameState = GameState.MENU
+        self.mediapipeProcessor = mediapipeProcessor
         self.objects = []
 
 
@@ -21,8 +23,8 @@ class Engine:
         '''
         Turn on camera and set up video window
         '''
-        self.video = cv2.VideoCapture(0)
-        self.fps = self.video.get(cv2.CAP_PROP_FPS)
+        self.camera = cv2.VideoCapture(0)
+        self.fps = self.camera.get(cv2.CAP_PROP_FPS)
         self.nameWindow = "Press q to exit"
         cv2.namedWindow(self.nameWindow)
         cv2.setMouseCallback(self.nameWindow, self.mouse_click)
@@ -50,22 +52,6 @@ class Engine:
                 self.endGame()
 
 
-    def show_interface(self):
-        while self.camera.isOpened():
-            _, image = self.camera.read()
-            image = cv2.flip(image, 1)
-            
-            cv2.imshow(self.nameWindow, image)
-            self.interface.drawInterface(image)
-
-
-            if cv2.waitKey(5) & 0xFF == ord('q'):
-                    break
-            
-        self.camera.release()
-        cv2.destroyAllWindows()
-
-
     def startGame(self):
         self.gameOn = GameState.INGAME
 
@@ -87,3 +73,15 @@ class Engine:
         
     def closeWindows(self):
         cv2.destroyAllWindows()
+
+    def gameLoop(self):
+        # Get image
+        _, image = self.camera.read()
+        image = cv2.flip(image, 1)
+        
+        # Generate object maybe
+
+        cv2.imshow(self.nameWindow, image)
+        self.interface.drawInterface(image)
+
+    def decideIfDrawObject(self):
