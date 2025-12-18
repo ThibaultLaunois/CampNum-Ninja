@@ -66,9 +66,9 @@ class Interface:
         base_image = self.drawMenuBorder(base_image)
         base_image = self.drawStartStop(base_image)
         base_image = self.drawScore(base_image, score)
-        #base_image = self.drawVideo(base_image, image)
+        base_image = self.drawVideo(base_image, image)
         #base_image = self.drawArock(base_image, 800, 320)
-        cv2.imshow(self.nameWindow, image)
+        cv2.imshow(self.nameWindow, base_image)
 
     # def drawArock(self, image, x, y):
     #     new_image = image.copy()
@@ -120,9 +120,8 @@ class Interface:
 
     def drawVideo(self, base_image, video):
         #get video on draw on top
-        
-        new_video = cv2.resize(video, (1200,900))
+        new_video = cv2.resize(video, (self.windowWidth - self.widthEmpty, self.windowHeight))
         new_image = base_image.copy()
-        new_image[400:1600, 0:900] = new_video
+        new_image[0:self.windowHeight, self.widthEmpty:self.windowWidth] = new_video
 
         return new_image
