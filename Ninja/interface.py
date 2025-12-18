@@ -111,7 +111,7 @@ class Interface:
         return new_image
 
     def drawInterface(self, image, score, FPS):
-        base_image = self.drawScore(self.menuInterface, score)
+        base_image = self.drawScore(score)
         base_image = self.drawFPS(base_image, FPS)
         base_image = self.drawVideo(base_image, image.copy())
         cv2.imshow(self.nameWindow, base_image)
