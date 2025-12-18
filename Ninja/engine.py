@@ -16,7 +16,7 @@ class Engine:
     def __init__(self, game:Game, interface:Interface, mediapipeProcessor:mediapipeProcessor):
         self.game = Game()
         self.interface = interface
-        self.gameState = GameState.MENU
+        self.gameState = GameState.INGAME
         self.mediapipeProcessor = mediapipeProcessor
         self.objects = []
         self.validRadius = 5
@@ -62,7 +62,7 @@ class Engine:
         self.gameOn = GameState.MENU
 
     def updateObjectPositions(self):
-        for _, i in enumerate(self.objects):
+        for i, _ in enumerate(self.objects):
             self.objects[i].updatePos()
     
     def stopCamera(self):
@@ -76,10 +76,14 @@ class Engine:
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
-        if not self.imageShape:
+        if (not self.imageShape) and (image is not None):
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
-        
+        # Check if object to delete
+        right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
+        left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
+        self.detectTouch(right_landmarks, left_landmarks)
+
         # Update position of objects
         self.updateObjectPositions()
 
@@ -94,14 +98,14 @@ class Engine:
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.05 * self.game.getDifficulty()
+        p = 0.1 * self.game.getDifficulty()
         if x < p:
-            obj = Object()
+            obj = Object(type=None)
             self.objects.append(obj)
 
     def drawObjects(self,image):
         for object in self.objects:
-            image = cv2.circle(image, center=object.position, 
+            image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
                                radius=object.radius, 
                                color=object.color, 
                                thickness=-1)
@@ -110,7 +114,7 @@ class Engine:
     def detectTouch(self, right_landmarks, left_landmarks):
         for ind, object in enumerate(self.objects):
             ind_to_delete = []
-            if right_landmarks:
+            try:
                 x_loc = right_landmarks.landmark[9].x * self.image_width
                 y_loc = right_landmarks.landmark[9].y * self.image_height
                 if ((object.x - object.radius < x_loc) &
@@ -119,8 +123,10 @@ class Engine:
                     (object.y + object.radius > y_loc)):
                     self.game.updateScore(5)
                     ind_to_delete.append(ind)
+            except:
+                pass
 
-            if left_landmarks:
+            try:
                 x_loc = right_landmarks.landmark[9].x * self.image_width
                 y_loc = right_landmarks.landmark[9].y * self.image_height
                 if ((object.x - object.radius < x_loc) &
@@ -129,6 +135,9 @@ class Engine:
                     (object.y + object.radius > y_loc)):
                     self.game.updateScore(5)
                     ind_to_delete.append(ind)
+            except:
+                pass
 
             for index in sorted(ind_to_delete, reverse=True):
+                print(index)
                 del self.objects[index]

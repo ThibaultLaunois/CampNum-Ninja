@@ -1,7 +1,7 @@
 import numpy as np
 
 class Object:
-    def __init__(self, type, vitesse=(0,20), acceleration =(0,0), radius=5, color=(0,0,0)):
+    def __init__(self, type, vitesse=(0,100), acceleration =(0,0), radius=100, color=(255,255,255)):
         width_image = 800
         self.fps = 30
         self.position = (np.random.randint(0, width_image), 0)

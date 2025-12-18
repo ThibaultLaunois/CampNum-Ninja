@@ -7,8 +7,8 @@ import cv2
 # Init game objects
 game = Game()
 interface = Interface()
-engine = Engine(game, interface)
 mediaPipeProcessor = mediapipeProcessor()
+engine = Engine(game, interface, mediaPipeProcessor)
 
 # Open camera
 engine.initCamera()

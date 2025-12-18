@@ -66,10 +66,9 @@ class Interface:
         base_image = self.drawMenuBorder(base_image)
         base_image = self.drawStartStop(base_image)
         base_image = self.drawScore(base_image, score)
-        base_image = self.drawVideo(base_image)
+        #base_image = self.drawVideo(base_image, image)
         #base_image = self.drawArock(base_image, 800, 320)
-
-        cv2.imshow(self.nameWindow, base_image)
+        cv2.imshow(self.nameWindow, image)
 
     # def drawArock(self, image, x, y):
     #     new_image = image.copy()
@@ -82,8 +81,7 @@ class Interface:
     #         self.rockBGR * self.rockAlpha[..., np.newaxis] + 
     #         new_image[y_start:y_end, x_start:x_end] * (1 - self.rockAlpha[..., np.newaxis])
     #     )
-
-        return new_image
+    #    return new_image
     
     def drawMenuBorder(self, image):
         top_left = (0, 0)
@@ -118,10 +116,13 @@ class Interface:
 
         #draw text
         new_image = cv2.putText(image, text, (x_text, y_text), self.font, self.fontScale, self.textColor, self.textThickness)
-
         return new_image
 
-    def drawVideo(self, image):
+    def drawVideo(self, base_image, video):
         #get video on draw on top
-        new_image = image
+        
+        new_video = cv2.resize(video, (1200,900))
+        new_image = base_image.copy()
+        new_image[400:1600, 0:900] = new_video
+
         return new_image
