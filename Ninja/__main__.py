@@ -21,9 +21,9 @@ with mp.solutions.hands.Hands(max_num_hands=10) as hands:
     while True:
         t_start = time.time()
         if engine.gameState == GameState.INGAME:
-            engine.gameLoop()
+            engine.gameLoop(hands)
         else:
-            engine.menuLoop()
+            engine.menuLoop(hands)
         t_end = time.time()
         duration = t_end - t_start
         if duration < frame_duration:
