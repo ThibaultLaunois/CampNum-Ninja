@@ -92,7 +92,7 @@ class Engine:
         #image = self.displayLandmark(image, results)
         #self.detectTouchAll(results)
         
-        image = self.detectTouchAllAndDisplay(results, image)
+        image = self.detectTouchAllAndDisplay(results.multi_hand_landmarks, image)
         
 
         # Update position of objects
@@ -201,9 +201,10 @@ class Engine:
         for ind, object in enumerate(self.objects):     
             x, y = object.position[0], object.position[1]
             # Check if either hand has touched an object
-
-            if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
+            if results:
+                for hand_landmarks in results:
+            # if results.multi_hand_landmarks:
+            #     for hand_landmarks in results.multi_hand_landmarks:
                     # Detect touch
                     x_loc = hand_landmarks.landmark[9].x * self.image_width
                     y_loc = hand_landmarks.landmark[9].y * self.image_height
