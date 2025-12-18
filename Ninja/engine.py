@@ -16,7 +16,7 @@ class Engine:
     def __init__(self, game:Game, interface:Interface, mediapipeProcessor:mediapipeProcessor):
         self.game = Game()
         self.interface = interface
-        self.gameState = GameState.INGAME
+        self.gameState = GameState.MENU
         self.mediapipeProcessor = mediapipeProcessor
         self.objects = []
         self.validRadius = 5
@@ -30,6 +30,7 @@ class Engine:
         self.camera = cv2.VideoCapture(0)
         self.fps = self.camera.get(cv2.CAP_PROP_FPS)
         cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
+
 
     def mouse_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -52,14 +53,15 @@ class Engine:
 
 
     def startGame(self):
-        self.gameOn = GameState.INGAME
+        self.gameState = GameState.INGAME
         self.game = Game()
 
     def endGame(self):
-        self.gameOn = GameState.RECAPSCORE
+        self.gameState = GameState.RECAPSCORE
+        self.objects = []
     
     def returnToMenu(self):
-        self.gameOn = GameState.MENU
+        self.gameState = GameState.MENU
 
     def updateObjectPositions(self):
         for i, _ in enumerate(self.objects):
@@ -76,9 +78,7 @@ class Engine:
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
-        if (not self.imageShape) and (image is not None):
-            self.image_height, self.image_width, _ = image.shape
-            self.imageShape = True
+
         # Check if object to delete
         right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
         left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
@@ -96,11 +96,26 @@ class Engine:
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore())
 
+    def menuLoop(self):
+
+        # Get image
+        _, image = self.camera.read()
+        image = cv2.flip(image, 1)
+        if (not self.imageShape) and (image is not None):
+            self.image_height, self.image_width, _ = image.shape
+            self.imageShape = True
+        # Check if object to delete
+        right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
+        left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
+
+        # Add interface on top of current image and show the result
+        self.interface.drawInterface(image, self.game.getScore())
+
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
         p = 0.1 * self.game.getDifficulty()
         if x < p:
-            obj = Object(type=None)
+            obj = Object(type=None, position=(0, self.image_width))
             self.objects.append(obj)
 
     def drawObjects(self,image):
@@ -112,8 +127,8 @@ class Engine:
         return image
 
     def detectTouch(self, right_landmarks, left_landmarks):
-        for ind, object in enumerate(self.objects):
-            ind_to_delete = []
+        ind_to_delete = []
+        for ind, object in enumerate(self.objects):     
             x, y = object.position[0], object.position[1]
             try:
                 x_loc = right_landmarks.landmark[9].x * self.image_width
@@ -122,7 +137,6 @@ class Engine:
                     (x + object.radius > x_loc) &
                     (y - object.radius < y_loc) &
                     (y + object.radius > y_loc))):
-                    print("COUCOU")
                     self.game.updateScore(5)
                     ind_to_delete.append(ind)
             except:
@@ -140,5 +154,8 @@ class Engine:
             except:
                 pass
 
-            for index in sorted(ind_to_delete, reverse=True):
-                del self.objects[index]
+            if y > self.image_height:
+                ind_to_delete.append(ind)
+
+        for index in sorted(ind_to_delete, reverse=True):
+            del self.objects[index]

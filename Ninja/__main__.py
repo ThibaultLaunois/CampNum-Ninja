@@ -1,5 +1,6 @@
 from Ninja.engine import Engine
 from Ninja.game import Game
+from Ninja.gameState import GameState
 from Ninja.mediapipeProcessor import mediapipeProcessor
 from Ninja.interface import Interface
 import cv2
@@ -15,8 +16,12 @@ engine.initCamera()
 
 # Game loop
 while True:
-    engine.gameLoop()
-    if cv2.waitKey(5) & 0xFF == ord('q'):
+    if engine.gameState == GameState.INGAME:
+        engine.gameLoop()
+    else:
+        engine.menuLoop()
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 # Close camera & windows
