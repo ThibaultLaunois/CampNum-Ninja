@@ -10,6 +10,8 @@ class mediapipeProcessor:
     def __init__(self) -> None:
         Holistic = mp.solutions.holistic.Holistic
         self.model = Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+        # self.model_hands = mp.solutions.hands
+        # self.hand_drawing = mp.solutions.drawing_utils
 
 
     def get_body_landmarks(self, image):
@@ -40,6 +42,10 @@ class mediapipeProcessor:
         '''     
         results = self.model.process(image) 
         return results.left_hand_landmarks
+    
+    def get_hands(self, image, hands):
+        results = hands.process(image)
+        return results
     
 
     def format_landmarks(self, landmarks_in):

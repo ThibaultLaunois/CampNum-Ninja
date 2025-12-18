@@ -73,16 +73,22 @@ class Engine:
     def closeWindows(self):
         cv2.destroyAllWindows()
 
-    def gameLoop(self):
+    def gameLoop(self, hands):
 
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
 
         # Check if object to delete
-        right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
-        self.detectTouch(right_landmarks, left_landmarks)
+        # right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
+        # left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
+        # self.detectTouch(right_landmarks, left_landmarks)
+
+        results = self.mediapipeProcessor.get_hands(image, hands)
+
+        image = self.displayLandmark(image, results)
+
+        self.detectTouchAll(results)
 
         # Update position of objects
         self.updateObjectPositions()
@@ -96,7 +102,7 @@ class Engine:
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore())
 
-    def menuLoop(self):
+    def menuLoop(self, hands):
 
         # Get image
         _, image = self.camera.read()
@@ -107,6 +113,10 @@ class Engine:
         # Check if object to delete
         right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
         left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
+
+        results = self.mediapipeProcessor.get_hands(image, hands)
+
+        image = self.displayLandmark(image, results)
 
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore())
@@ -125,11 +135,93 @@ class Engine:
                                color=object.color, 
                                thickness=-1)
         return image
+    
+    def overlay_shape(self, image, landmark, shape_type='circle', color=(0, 0, 255), radius=5):
+        '''
+        Docstring for overlay_shape
+        
+        :param image: image that objects are detected from
+        :param landmark: landmark that we want to draw on
+        :param shape_type: the type of shape to overlay on the landmark
+        :param color: the color of the overlaid shape
+        :param radius: the radius of the overlaid shape
+        '''
+        height, width, _ = image.shape
+        x = int(landmark.x * width)
+        y = int(landmark.y * height)
 
-    def detectTouch(self, right_landmarks, left_landmarks):
+        if shape_type == 'circle':
+            cv2.circle(image, (x, y), radius, color, -1)
+        elif shape_type == 'square':
+            cv2.rectangle(image, (x - radius, y - radius), (x + radius, y + radius), color, -1)
+        elif shape_type == 'star':
+            pts = []
+            for i in range(5):
+                angle = i * 2 * np.pi / 5
+                x_star = x + radius * np.cos(angle)
+                y_star = y + radius * np.sin(angle)
+                pts.append((int(x_star), int(y_star)))
+            pts.append(pts[0])  # Close the polygon
+            cv2.fillPoly(image, [np.array(pts)], color)
+
+        return image
+    
+    def displayLandmark(self, image, results):
+        
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                # wrist = hand_landmarks.landmark[0]
+                index_tip = hand_landmarks.landmark[8]
+                # middle_tip = hand_landmarks.landmark[12]
+                # Apply shapes to the landmarks
+                # frame = self.overlay_shape(frame, wrist, shape_type='square', color=(0, 255, 0), radius=10)
+                image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
+                # frame = self.overlay_shape(frame, middle_tip, shape_type='circle', color=(0, 0, 255), radius=15)
+
+        return image
+    
+
+    def detectTouchAll(self, results):
+        '''
+        Detect if the object is touched
+        
+        :param right_landmarks: landmarks detected for the right hand
+        :param left_landmarks: landmarks detected for the left hand
+        '''
         ind_to_delete = []
         for ind, object in enumerate(self.objects):     
             x, y = object.position[0], object.position[1]
+            # Check if either hand has touched an object
+
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    x_loc = hand_landmarks.landmark[8].x * self.image_width
+                    y_loc = hand_landmarks.landmark[8].y * self.image_height
+                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) ** 0.5 < object.radius:
+                        self.game.updateScore(5)
+                        ind_to_delete.append(ind)
+
+            # Store the indices of the objects that have left the frame
+            if y > self.image_height:
+                ind_to_delete.append(ind)
+
+        for index in sorted(ind_to_delete, reverse=True):
+            del self.objects[index]
+    
+
+    def detectTouch(self, right_landmarks, left_landmarks):
+        '''
+        Detect if the object is touched
+        
+        :param right_landmarks: landmarks detected for the right hand
+        :param left_landmarks: landmarks detected for the left hand
+        '''
+        ind_to_delete = []
+        for ind, object in enumerate(self.objects):     
+            x, y = object.position[0], object.position[1]
+            # Check if either hand has touched an object
+
+            
             try:
                 x_loc = right_landmarks.landmark[9].x * self.image_width
                 y_loc = right_landmarks.landmark[9].y * self.image_height
@@ -154,6 +246,7 @@ class Engine:
             except:
                 pass
 
+            # Store the indices of the objects that have left the frame
             if y > self.image_height:
                 ind_to_delete.append(ind)
 
