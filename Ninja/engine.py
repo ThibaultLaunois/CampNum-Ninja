@@ -114,30 +114,31 @@ class Engine:
     def detectTouch(self, right_landmarks, left_landmarks):
         for ind, object in enumerate(self.objects):
             ind_to_delete = []
+            x, y = object.position[0], object.position[1]
             try:
                 x_loc = right_landmarks.landmark[9].x * self.image_width
                 y_loc = right_landmarks.landmark[9].y * self.image_height
-                if ((object.x - object.radius < x_loc) &
-                    (object.x + object.radius > x_loc) &
-                    (object.y - object.radius < y_loc) &
-                    (object.y + object.radius > y_loc)):
+                if (((x - x_loc < object.radius) &
+                    (x + object.radius > x_loc) &
+                    (y - object.radius < y_loc) &
+                    (y + object.radius > y_loc))):
+                    print("COUCOU")
                     self.game.updateScore(5)
                     ind_to_delete.append(ind)
             except:
                 pass
 
             try:
-                x_loc = right_landmarks.landmark[9].x * self.image_width
-                y_loc = right_landmarks.landmark[9].y * self.image_height
-                if ((object.x - object.radius < x_loc) &
-                    (object.x + object.radius > x_loc) &
-                    (object.y - object.radius < y_loc) &
-                    (object.y + object.radius > y_loc)):
+                x_loc = left_landmarks.landmark[9].x * self.image_width
+                y_loc = left_landmarks.landmark[9].y * self.image_height
+                if ((x - object.radius < x_loc) &
+                    (x + object.radius > x_loc) &
+                    (y - object.radius < y_loc) &
+                    (y + object.radius > y_loc)):
                     self.game.updateScore(5)
                     ind_to_delete.append(ind)
             except:
                 pass
 
             for index in sorted(ind_to_delete, reverse=True):
-                print(index)
                 del self.objects[index]

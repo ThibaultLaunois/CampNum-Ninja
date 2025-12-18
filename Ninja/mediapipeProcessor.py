@@ -28,8 +28,7 @@ class mediapipeProcessor:
         
         :param image: the image used to find the landmarks
         '''        
-        results = self.model.process(image) 
-        print(results)
+        results = self.model.process(image)
         return results.right_hand_landmarks
     
 
