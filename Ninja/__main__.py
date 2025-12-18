@@ -7,6 +7,13 @@ from Ninja.mediapipeProcessor import mediapipeProcessor
 from Ninja.interface import Interface
 import cv2
 import time
+from argparse import ArgumentParser
+
+#Parser
+parser = ArgumentParser()
+parser.add_argument('--debug', type=bool, required=False)
+args = parser.parse_args()
+
 # Init game objects
 game = Game()
 interface = Interface()
