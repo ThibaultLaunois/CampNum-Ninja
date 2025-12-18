@@ -19,7 +19,7 @@ class Interface:
         #BackGround
         self.backgroundColor = (225, 202, 253)
 
-        #Text
+        #Text for menu
         self.textColor = (218, 85, 32)
         self.font = cv2.FONT_HERSHEY_COMPLEX_SMALL
         self.fontScale = 2
@@ -35,13 +35,6 @@ class Interface:
         self.widthBox = 300
         self.heightBox = 200
 
-        #rock
-        # self.rock = plt.imread("data/images/rock_1.png")
-        # new_size = (100, 100)
-        # self.rockAlpha = cv2.resize(self.rock[:, :,-1], new_size)
-        # self.rockBGR = cv2.cvtColor(cv2.resize(self.rock[:, :, :3], new_size), cv2.COLOR_RGB2BGR)
-        # self.rockBGR = (self.rockBGR * 255).astype(np.uint8)
-
         #Box position
         self.scoreBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 0.5))
         self.scoreBox = self.computeBoxCorner(self.scoreBoxMiddle)
@@ -52,8 +45,15 @@ class Interface:
         self.stopBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 2.5))
         self.stopBox = self.computeBoxCorner(self.stopBoxMiddle)
 
+        #Objects for Interface
+        self.rockMenuBGR, self.rockMenuAlpha = self.initImageAlphaBlending(plt.imread("data/images/rock_1.png"), 0.03)
+
         #Interface
         self.menuInterface = self.designMenuInterface()
+
+    def float32ToUint8(self, image):
+        new_image = (image.copy() * 255).astype(np.uint8)
+        return new_image
     
     def computeBoxCorner(self, middle):
         corners = (
@@ -72,6 +72,7 @@ class Interface:
         base_image = self.drawStartStop(base_image)
         #Draw Score Box without text
         base_image = self.drawBox(base_image, self.scoreBox)
+        base_image = self.putImageThere(base_image, self.rockMenuBGR, (200, 300), alpha=self.rockMenuAlpha)
         return base_image
 
     def drawBox(self, image, coordinates):
@@ -100,22 +101,23 @@ class Interface:
         return new_image
 
     def drawInterface(self, image, score):
-        base_image = self.drawScore(self.menuInterface, score)
+        base_image = self.drawScore(score)
         base_image = self.drawVideo(base_image, image.copy())
         cv2.imshow(self.nameWindow, base_image)
-
-    def drawArock(self, image, x, y):
+    
+    def initImageAlphaBlending(self, image, scaleFactor=None):
         new_image = image.copy()
-        w, h, _ = self.rockBGR.shape
-        x_start = x - w // 2
-        x_end = x + w - w // 2
-        y_start = y - h // 2
-        y_end = y + h - h // 2
-        new_image[y_start:y_end, x_start:x_end] = (
-            self.rockBGR * self.rockAlpha[..., np.newaxis] + 
-            new_image[y_start:y_end, x_start:x_end] * (1 - self.rockAlpha[..., np.newaxis])
-        )
-        return new_image
+
+        if scaleFactor is not None:
+            new_image = self.scaleImage(new_image, scaleFactor)
+
+        bgr, alpha = self.separateChannels(new_image)
+
+        #Convert float to uint
+        if bgr.max() < 1.01:
+            bgr = self.float32ToUint8(bgr)
+        
+        return bgr, alpha
     
     def drawMenuBorder(self, image):
         top_left = (0, 0)
@@ -130,11 +132,67 @@ class Interface:
         new_image = self.drawBoxAndText(new_image, "Stop", self.stopBox)
         return new_image
 
-    def drawScore(self, image, score):
+    def drawScore(self, score):
         #Get real score
         text = f"Score: {score}"
-        new_image = self.drawTextInBox(image.copy(), text, self.scoreBox)
+        new_image = self.drawTextInBox(self.menuInterface, text, self.scoreBox)
         return new_image
+
+    def putImageThere(self, base_image, add_image, coordinates, alpha=None, scaleFactor=None):
+        """
+        base_image : background image
+        add_image : foreground image with alpha channel (output of use plt.imread)
+        coordinates : middle of objects will be added there
+        scaleFactor: factor to increase or decrease image
+        """
+
+        new_image = base_image.copy()
+        add_image_resize = add_image.copy()
+
+        #Scale image
+        if scaleFactor is not None:
+            if alpha is None:
+                add_image_resize = self.scaleImage(add_image_resize, scaleFactor)
+            else:
+                add_image_resize = self.scaleImage(add_image_resize, scaleFactor)
+                alpha = self.scaleImage(alpha.copy(), scaleFactor)
+        
+        #alpha channel
+        if alpha is None:
+            bgr, alpha = self.separateChannels(add_image_resize)
+        else:
+            bgr = add_image_resize
+
+        #Convert to uint if float
+        if bgr.max() < 1.01:
+            bgr = self.float32ToUint8(bgr)
+
+        #determine coordinates
+        x, y = coordinates[0], coordinates[1]
+        h, w, _ = bgr.shape
+        x_start = x - w // 2
+        x_end = x + w - w // 2
+        y_start = y - h // 2
+        y_end = y + h - h // 2
+        
+        #Alpha blending
+        new_image[y_start:y_end, x_start:x_end] = (
+            bgr * alpha[..., np.newaxis] + 
+            new_image[y_start:y_end, x_start:x_end] * (1 - alpha[..., np.newaxis])
+        )
+        return new_image
+
+    def separateChannels(self, image):
+        rgb = image[..., :3].copy()
+        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        alpha = image[..., -1].copy()
+        return bgr, alpha
+
+    def scaleImage(self, image, scaleFactor):
+        hScaled = int(image.shape[0] * scaleFactor)
+        wScaled = int(image.shape[1] * scaleFactor)
+        image_resize = cv2.resize(image.copy(), (hScaled, wScaled))
+        return image_resize
 
     def drawVideo(self, base_image, video):
         #get video on draw on top
