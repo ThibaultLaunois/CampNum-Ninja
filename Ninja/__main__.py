@@ -12,11 +12,11 @@ game = Game()
 interface = Interface()
 mediaPipeProcessor = mediapipeProcessor()
 engine = Engine(game, interface, mediaPipeProcessor)
-frame_duration = 1 / 24
+frame_duration = 1 / 30
 # Open camera
 engine.initCamera()
 
-with mp.solutions.hands.Hands(max_num_hands=10) as hands:
+with mp.solutions.hands.Hands(max_num_hands=2) as hands:
 # Game loop
     while True:
         t_start = time.time()
@@ -26,6 +26,7 @@ with mp.solutions.hands.Hands(max_num_hands=10) as hands:
             engine.menuLoop(hands)
         t_end = time.time()
         duration = t_end - t_start
+        print(f"FPS: {1/duration:.1f}")
         if duration < frame_duration:
             time.sleep(frame_duration - duration)
 

@@ -88,9 +88,12 @@ class Engine:
 
         results = self.mediapipeProcessor.get_hands(image, hands)
 
-        image = self.displayLandmark(image, results)
-
-        self.detectTouchAll(results)
+        # ---
+        #image = self.displayLandmark(image, results)
+        #self.detectTouchAll(results)
+        
+        image = self.detectTouchAllAndDisplay(results, image)
+        
 
         # Update position of objects
         self.updateObjectPositions()
@@ -136,6 +139,10 @@ class Engine:
                                radius=object.radius, 
                                color=object.color, 
                                thickness=-1)
+            image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
+                               radius=object.radius+1, 
+                               color=(55,55,55), 
+                               thickness=1)
         return image
     
     def overlay_shape(self, image, landmark, shape_type='circle', color=(0, 0, 255), radius=5):
@@ -173,7 +180,7 @@ class Engine:
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 # wrist = hand_landmarks.landmark[0]
-                index_tip = hand_landmarks.landmark[8]
+                index_tip = hand_landmarks.landmark[9]
                 # middle_tip = hand_landmarks.landmark[12]
                 # Apply shapes to the landmarks
                 # frame = self.overlay_shape(frame, wrist, shape_type='square', color=(0, 255, 0), radius=10)
@@ -183,7 +190,7 @@ class Engine:
         return image
     
 
-    def detectTouchAll(self, results):
+    def detectTouchAllAndDisplay(self, results, image):
         '''
         Detect if the object is touched
         
@@ -197,9 +204,43 @@ class Engine:
 
             if results.multi_hand_landmarks:
                 for hand_landmarks in results.multi_hand_landmarks:
-                    x_loc = hand_landmarks.landmark[8].x * self.image_width
-                    y_loc = hand_landmarks.landmark[8].y * self.image_height
-                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) ** 0.5 < object.radius:
+                    # Detect touch
+                    x_loc = hand_landmarks.landmark[9].x * self.image_width
+                    y_loc = hand_landmarks.landmark[9].y * self.image_height
+                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
+                        self.game.updateScore(5)
+                        ind_to_delete.append(ind)
+                    
+                    # Display landmarks
+                    index_tip = hand_landmarks.landmark[9]
+                    image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
+
+            # Store the indices of the objects that have left the frame
+            if y > self.image_height:
+                ind_to_delete.append(ind)
+
+        for index in set(sorted(ind_to_delete, reverse=True)):
+            del self.objects[index]
+
+        return image
+    
+    def detectTouchAll(self, results):
+        '''
+        Detect if the object is touched
+
+        :param right_landmarks: landmarks detected for the right hand
+        :param left_landmarks: landmarks detected for the left hand
+        '''
+        ind_to_delete = []
+        for ind, object in enumerate(self.objects):     
+            x, y = object.position[0], object.position[1]
+            # Check if either hand has touched an object
+
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    x_loc = hand_landmarks.landmark[9].x * self.image_width
+                    y_loc = hand_landmarks.landmark[9].y * self.image_height
+                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
                         self.game.updateScore(5)
                         ind_to_delete.append(ind)
 
@@ -207,7 +248,7 @@ class Engine:
             if y > self.image_height:
                 ind_to_delete.append(ind)
 
-        for index in sorted(ind_to_delete, reverse=True):
+        for index in set(sorted(ind_to_delete, reverse=True)):
             del self.objects[index]
     
 
