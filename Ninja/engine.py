@@ -28,8 +28,10 @@ class Engine:
         Turn on camera and set up video window
         '''
         self.camera = cv2.VideoCapture(0)
+        self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 3)
         self.fps = self.camera.get(cv2.CAP_PROP_FPS)
         cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
+
 
 
     def mouse_click(self, event, x, y, flags, param):
@@ -111,8 +113,8 @@ class Engine:
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
         # Check if object to delete
-        right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
+        #right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
+        #left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
 
         results = self.mediapipeProcessor.get_hands(image, hands)
 
