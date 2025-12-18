@@ -34,6 +34,16 @@ class Interface:
         self.heightEmpty = 900
         self.widthBox = 300
         self.heightBox = 200
+        
+        # FPS
+        self.FPSposition = (self.menuThickness, self.windowHeight - self.menuThickness)
+        
+        #rock
+        # self.rock = plt.imread("data/images/rock_1.png")
+        # new_size = (100, 100)
+        # self.rockAlpha = cv2.resize(self.rock[:, :,-1], new_size)
+        # self.rockBGR = cv2.cvtColor(cv2.resize(self.rock[:, :, :3], new_size), cv2.COLOR_RGB2BGR)
+        # self.rockBGR = (self.rockBGR * 255).astype(np.uint8)
 
         #Box position
         self.scoreBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 0.5))
@@ -100,8 +110,9 @@ class Interface:
         new_image = self.drawTextInBox(new_image, text, coordinates)
         return new_image
 
-    def drawInterface(self, image, score):
-        base_image = self.drawScore(score)
+    def drawInterface(self, image, score, FPS):
+        base_image = self.drawScore(self.menuInterface, score)
+        base_image = self.drawFPS(base_image, FPS)
         base_image = self.drawVideo(base_image, image.copy())
         cv2.imshow(self.nameWindow, base_image)
     
@@ -201,3 +212,7 @@ class Interface:
         new_image[0:self.windowHeight, self.widthEmpty:self.windowWidth] = new_video
         return new_image
     
+    def drawFPS(self, image, FPS):
+        text = f"FPS: {FPS}"
+        new_image = cv2.putText(image.copy(), text, self.FPSposition, self.font, 1, self.textColor, 1)
+        return new_image

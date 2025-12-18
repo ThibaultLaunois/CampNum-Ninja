@@ -33,7 +33,7 @@ with mp.solutions.hands.Hands(max_num_hands=2) as hands:
             engine.menuLoop(hands)
         t_end = time.time()
         duration = t_end - t_start
-        print(f"FPS: {1/duration:.1f}")
+        engine.updateFPS(duration)
         if duration < frame_duration:
             time.sleep(frame_duration - duration)
 

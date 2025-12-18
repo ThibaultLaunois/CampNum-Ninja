@@ -21,6 +21,10 @@ class Engine:
         self.objects = []
         self.validRadius = 5
         self.imageShape = False
+        self.currentFPS = 30
+
+    def updateFPS(self, duration):
+        self.currentFPS = min(int(1/duration), 30)
 
 
     def initCamera(self):
@@ -31,8 +35,6 @@ class Engine:
         self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 3)
         self.fps = self.camera.get(cv2.CAP_PROP_FPS)
         cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
-
-
 
     def mouse_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -105,7 +107,7 @@ class Engine:
         image = self.drawObjects(image)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore())
+        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
 
     def menuLoop(self, hands):
 
@@ -124,7 +126,7 @@ class Engine:
         image = self.displayLandmark(image, results)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore())
+        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
