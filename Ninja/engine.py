@@ -230,6 +230,6 @@ class Engine:
                 self.game.updateMulti()
                 ind_to_delete.append(ind)
 
-        for index in set(sorted(ind_to_delete, reverse=True)):
+        for index in sorted(list(set(ind_to_delete)), reverse=True):
             del self.objects[index]
     
