@@ -87,7 +87,7 @@ class Engine:
 
     def startGame(self):
         self.gameState = GameState.INGAME
-        self.game = Game()
+        self.game = Game(difficulty=self.game.difficulty)
 
     def endGame(self):
         self.gameState = GameState.RECAPSCORE
