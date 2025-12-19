@@ -40,6 +40,9 @@ with mp.solutions.hands.Hands(max_num_hands=2) as hands:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+        if engine.close:
+            break
+
 # Close camera & windows
 engine.stopCamera()
 engine.closeWindows()

@@ -29,31 +29,20 @@ class Interface:
         self.menuColor = (32, 72, 218)
         self.menuThickness = 10
 
-        #Boxes
+        #Boxes sizes
         self.widthEmpty = 400
         self.heightEmpty = 900
         self.widthBox = 300
         self.heightBox = 200
+        self.spaceBetweenStartStopBox = 10
+        self.widthStartStopBox = (self.widthBox - self.spaceBetweenStartStopBox) // 2
+        self.heightStartStopBox = 100
+        self.smallHeightBox = 100
+
+        self.shadowOffset = 4
         
         # FPS
         self.FPSposition = (self.menuThickness, self.windowHeight - self.menuThickness)
-        
-        #rock
-        # self.rock = plt.imread("data/images/rock_1.png")
-        # new_size = (100, 100)
-        # self.rockAlpha = cv2.resize(self.rock[:, :,-1], new_size)
-        # self.rockBGR = cv2.cvtColor(cv2.resize(self.rock[:, :, :3], new_size), cv2.COLOR_RGB2BGR)
-        # self.rockBGR = (self.rockBGR * 255).astype(np.uint8)
-
-        #Box position
-        self.scoreBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 0.5))
-        self.scoreBox = self.computeBoxCorner(self.scoreBoxMiddle)
-
-        self.startBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 1.5))
-        self.startBox = self.computeBoxCorner(self.startBoxMiddle)
-
-        self.stopBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 2.5))
-        self.stopBox = self.computeBoxCorner(self.stopBoxMiddle)
 
         #Objects for Interface
         self.rockMenuBGR, self.rockMenuAlpha = self.initImageAlphaBlending(plt.imread("data/images/rock_1.png"), 0.03)
@@ -65,14 +54,40 @@ class Interface:
         new_image = (image.copy() * 255).astype(np.uint8)
         return new_image
     
-    def computeBoxCorner(self, middle):
+    def initMenuBoxes(self):
+        #Score Combo Multi
+        self.scoreBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight // 3 * 0.5))
+        self.scoreBox = self.computeBoxCorner(self.scoreBoxMiddle, self.widthBox, self.heightBox)
+
+        #Difficulty
+
+        #minus difficulty
+
+        #plus difficulty
+
+        #Start
+        self.startBoxMiddle = ((self.widthEmpty - self.spaceBetweenStartStopBox - self.widthStartStopBox) // 2, int(self.windowHeight // 3 * 1.5))
+        self.startBox = self.computeBoxCorner(self.startBoxMiddle, self.widthStartStopBox, self.heightStartStopBox)
+
+        #Stop
+        self.stopBoxMiddle = ((self.widthEmpty + self.spaceBetweenStartStopBox + self.widthStartStopBox) // 2, int(self.windowHeight // 3 * 1.5))
+        self.stopBox = self.computeBoxCorner(self.stopBoxMiddle, self.widthStartStopBox, self.heightStartStopBox)
+
+        #Quit
+        self.quitBoxMiddle = (self.widthEmpty // 2, int(self.windowHeight * 0.9))
+        self.quitBox = self.computeBoxCorner(self.quitBoxMiddle, self.widthBox, self.smallHeightBox)
+
+    def computeBoxCorner(self, middle, width, height):
         corners = (
-            (middle[0] - self.widthBox // 2, middle[1] - self.heightBox // 2),
-            (middle[0] + self.widthBox // 2, middle[1] + self.heightBox // 2)
+            (middle[0] - width // 2, middle[1] - height // 2),
+            (middle[0] + (width - width // 2), middle[1] + (height - height // 2))
         )
         return corners
     
     def designMenuInterface(self):
+        #Init parameters for the boxes, needed for the mouse
+        self.initMenuBoxes()
+
         #background image
         shape = (self.windowHeight, self.windowWidth)
         num_channels = 3
@@ -80,9 +95,12 @@ class Interface:
 
         base_image = self.drawMenuBorder(base_image)
         base_image = self.drawStartStop(base_image)
-        #Draw Score Box without text
-        base_image = self.drawBox(base_image, self.scoreBox)
-        base_image = self.putImageThere(base_image, self.rockMenuBGR, (200, 300), alpha=self.rockMenuAlpha)
+        #Quit Button
+        base_image = self.drawBoxAndText(base_image, "Quit (or q)", self.quitBox)
+        #Draw ScoreMultiCombo Box without text
+        base_image = self.drawRoundedBoxWithShadow(base_image, self.scoreBox)
+        #Draw a random rock
+        #base_image = self.putImageThere(base_image, self.rockMenuBGR, (200, 300), alpha=self.rockMenuAlpha)
         return base_image
 
     def drawBox(self, image, coordinates):
@@ -105,7 +123,7 @@ class Interface:
     
     def drawBoxAndText(self, image, text, coordinates):
         #draw box
-        new_image = self.drawBox(image.copy(), coordinates)
+        new_image = self.drawRoundedBoxWithShadow(image.copy(), coordinates)
         #put text
         new_image = self.drawTextInBox(new_image, text, coordinates)
         return new_image
@@ -217,6 +235,39 @@ class Interface:
     def drawFPS(self, image, FPS):
         text = f"FPS: {FPS}"
         new_image = cv2.putText(image.copy(), text, self.FPSposition, self.font, 1, self.textColor, 1)
+        return new_image
+    
+    def drawRoundedBoxWithShadow(self, image, coordinates, radius=22, color=(255, 200, 230)):
+        new_image = image.copy()
+        coordinatesShadow = self.shadow(coordinates, self.shadowOffset)
+
+        new_image = self.drawRoundedBox(new_image, coordinatesShadow, radius=radius, color=(0,0,0))
+        new_image = self.drawRoundedBox(new_image, coordinates, radius=radius, color=color)
+        return new_image
+
+    def shadow(self, coordinates, offset):
+        coordNp = np.array(coordinates)
+        #coordNp -= offset
+        coordNp += offset
+        coordNew = (
+            (coordNp[0][0], coordNp[0][1]),
+            (coordNp[1][0], coordNp[1][1])
+        )
+        return coordNew
+
+    def drawRoundedBox(self, image, coordinates, radius=22, color=(255, 200, 230)):
+        new_image = image.copy()
+        x1, y1 = coordinates[0]
+        x2, y2 = coordinates[1]
+        radius = int(max(0, min(radius, abs(x2-x1)//2, abs(y2-y1)//2)))
+        
+        new_image = cv2.rectangle(new_image, (x1+radius, y1), (x2-radius, y2), color, -1)
+        new_image = cv2.rectangle(new_image, (x1, y1+radius), (x2, y2-radius), color, -1)
+        new_image = cv2.circle(new_image, (x1+radius, y1+radius), radius, color, -1)
+        new_image = cv2.circle(new_image, (x2-radius, y1+radius), radius, color, -1)
+        new_image = cv2.circle(new_image, (x1+radius, y2-radius), radius, color, -1)
+        new_image = cv2.circle(new_image, (x2-radius, y2-radius), radius, color, -1)
+
         return new_image
     
     def drawComboAndMulti(self, image, combo, multi):

@@ -22,6 +22,7 @@ class Engine:
         self.validRadius = 5
         self.imageShape = False
         self.currentFPS = 30
+        self.close = False
 
     def updateFPS(self, duration):
         self.currentFPS = min(int(1/duration), 30)
@@ -54,6 +55,15 @@ class Engine:
                 y < self.interface.stopBox[1][1]
             ):
                 self.endGame()
+        
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.quitBox[0][0] and 
+                x < self.interface.quitBox[1][0] and 
+                y > self.interface.quitBox[0][1] and
+                y < self.interface.quitBox[1][1]
+            ):
+                self.close = True
 
 
     def startGame(self):
