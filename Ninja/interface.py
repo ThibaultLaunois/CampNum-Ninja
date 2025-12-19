@@ -14,14 +14,14 @@ class Interface:
         cv2.namedWindow(self.nameWindow)
 
         #Colors
-        self.mainColor = (255, 200, 230)
-        self.plusMinusColor = (120, 120, 120)
+        self.mainColor = (255, 210, 162)
+        self.plusMinusColor = (204, 175, 255)
 
         #BackGround
-        self.backgroundColor = (225, 202, 253)
+        self.backgroundColor = (221, 200, 255)
 
         #Text for menu
-        self.textColor = (218, 85, 32)
+        self.textColor = (0, 0, 0)#(219, 180, 205)
         self.font = cv2.FONT_HERSHEY_DUPLEX #cv2.FONT_HERSHEY_COMPLEX_SMALL
         self.fontScale = 1 #2
         self.textThickness = 2
@@ -228,7 +228,7 @@ class Interface:
         return new_image
 
     def drawTime(self, base_image, time):
-        text = f"Time left: {time}"
+        text = f"Time left: {int(time)}"
         new_image = self.drawTextInBox(base_image.copy(), text, self.timeBox)
         return new_image
     
