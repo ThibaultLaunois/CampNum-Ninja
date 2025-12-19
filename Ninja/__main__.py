@@ -23,9 +23,7 @@ frame_duration = 1 / 30
 # Open camera
 engine.initCamera()
 
-with mp.solutions.hands.Hands(max_num_hands=2,
-                              min_detection_confidence=0.5,
-                              min_tracking_confidence=0.3) as hands:
+with mp.solutions.hands.Hands(max_num_hands=2) as hands:
 # Game loop
     while True:
         t_start = time.time()
