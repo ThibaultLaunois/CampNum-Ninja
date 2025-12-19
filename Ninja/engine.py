@@ -96,7 +96,9 @@ class Engine:
         
         image = self.detectTouchAllAndDisplay(results.multi_hand_landmarks, image)
         
-
+        # Show landmarks
+        image = self.displayLandmark(image, results)
+        
         # Update position of objects
         self.updateObjectPositions()
 
@@ -217,8 +219,8 @@ class Engine:
                         ind_to_delete.append(ind)
                     
                     # Display landmarks
-                    index_tip = hand_landmarks.landmark[9]
-                    image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
+                    # index_tip = hand_landmarks.landmark[9]
+                    # image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
 
             # Store the indices of the objects that have left the frame
             if y > self.image_height:
