@@ -24,7 +24,7 @@ class Game:
         :getDifficulty:
     """
 
-    def __init__(self, score=0, duration=60, combo=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=5, detectionRadius=1):
+    def __init__(self, score=0, duration=60, combo=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
         self.score = score
         self.combo = combo
         self.scoreMulti = 1
