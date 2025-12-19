@@ -146,7 +146,7 @@ class Engine:
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.05 * self.game.getDifficulty()
+        p = 0.02 * self.game.getDifficulty()
         if x < p:
             obj = Object(type=None, position=(0, self.image_width))
             self.objects.append(obj)

@@ -28,14 +28,14 @@ with mp.solutions.hands.Hands(max_num_hands=2,
                               min_tracking_confidence=0.3) as hands:
 # Game loop
     while True:
-        t_start = time.time()
+        t_start = time.time() # Measure current time for future FPS display
         if engine.gameState == GameState.INGAME:
             engine.gameLoop(hands)
         else:
             engine.menuLoop(hands)
-        t_end = time.time()
-        duration = t_end - t_start
+        duration = time.time() - t_start
         engine.updateFPS(duration)
+        
         if duration < frame_duration:
             time.sleep(frame_duration - duration)
 
