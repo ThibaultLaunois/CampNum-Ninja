@@ -6,6 +6,8 @@ from Ninja.Object import Object
 import random
 
 import cv2
+import mediapipe as mp
+import numpy as np
 
 
 class Engine:
@@ -77,7 +79,7 @@ class Engine:
     def closeWindows(self):
         cv2.destroyAllWindows()
 
-    def gameLoop(self, hands):
+    def gameLoop(self):
 
         # Get image
         _, image = self.camera.read()
@@ -87,16 +89,13 @@ class Engine:
         # right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
         # left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
         # self.detectTouch(right_landmarks, left_landmarks)
-
-        results = self.mediapipeProcessor.get_hands(image, hands)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+        results = self.mediapipeProcessor.landmarker.detect(mp_image)
 
         # ---
-        #image = self.displayLandmark(image, results)
-        #self.detectTouchAll(results)
+        image = self.displayLandmark(image, results)
+        self.detectTouchAll(results)
         
-        image = self.detectTouchAllAndDisplay(results.multi_hand_landmarks, image)
-        
-
         # Update position of objects
         self.updateObjectPositions()
 
@@ -109,7 +108,7 @@ class Engine:
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
 
-    def menuLoop(self, hands):
+    def menuLoop(self):
 
         # Get image
         _, image = self.camera.read()
@@ -117,11 +116,9 @@ class Engine:
         if (not self.imageShape) and (image is not None):
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
-        # Check if object to delete
-        #right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        #left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
-
-        results = self.mediapipeProcessor.get_hands(image, hands)
+        
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+        results = self.mediapipeProcessor.landmarker.detect(mp_image)
 
         image = self.displayLandmark(image, results)
 
@@ -132,6 +129,9 @@ class Engine:
         x = random.random() #between 0 and 1
         p = 0.1 * self.game.getDifficulty()
         if x < p:
+            # vel_x = np.random.randint(-300, 300)
+            # vel_y = np.random.randint(-300, 300)
+            # obj = Object(type=None, position=(0, self.image_width), vitesse=(vel_x, vel_y))
             obj = Object(type=None, position=(0, self.image_width))
             self.objects.append(obj)
 
@@ -179,10 +179,10 @@ class Engine:
     
     def displayLandmark(self, image, results):
         
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
+        if results.hand_landmarks:
+            for hand_landmarks in results.hand_landmarks:
                 # wrist = hand_landmarks.landmark[0]
-                index_tip = hand_landmarks.landmark[9]
+                index_tip = hand_landmarks[9]
                 # middle_tip = hand_landmarks.landmark[12]
                 # Apply shapes to the landmarks
                 # frame = self.overlay_shape(frame, wrist, shape_type='square', color=(0, 255, 0), radius=10)
@@ -191,41 +191,6 @@ class Engine:
 
         return image
     
-
-    def detectTouchAllAndDisplay(self, results, image):
-        '''
-        Detect if the object is touched
-        
-        :param right_landmarks: landmarks detected for the right hand
-        :param left_landmarks: landmarks detected for the left hand
-        '''
-        ind_to_delete = []
-        for ind, object in enumerate(self.objects):     
-            x, y = object.position[0], object.position[1]
-            # Check if either hand has touched an object
-            if results:
-                for hand_landmarks in results:
-            # if results.multi_hand_landmarks:
-            #     for hand_landmarks in results.multi_hand_landmarks:
-                    # Detect touch
-                    x_loc = hand_landmarks.landmark[9].x * self.image_width
-                    y_loc = hand_landmarks.landmark[9].y * self.image_height
-                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
-                        self.game.updateScore(5)
-                        ind_to_delete.append(ind)
-                    
-                    # Display landmarks
-                    index_tip = hand_landmarks.landmark[9]
-                    image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
-
-            # Store the indices of the objects that have left the frame
-            if y > self.image_height:
-                ind_to_delete.append(ind)
-
-        for index in sorted(list(set(ind_to_delete)), reverse=True):
-            del self.objects[index]
-
-        return image
     
     def detectTouchAll(self, results):
         '''
@@ -239,10 +204,10 @@ class Engine:
             x, y = object.position[0], object.position[1]
             # Check if either hand has touched an object
 
-            if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
-                    x_loc = hand_landmarks.landmark[9].x * self.image_width
-                    y_loc = hand_landmarks.landmark[9].y * self.image_height
+            if results.hand_landmarks:
+                for hand_landmarks in results.hand_landmarks:
+                    x_loc = hand_landmarks[9].x * self.image_width
+                    y_loc = hand_landmarks[9].y * self.image_height
                     if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
                         self.game.updateScore(5)
                         ind_to_delete.append(ind)

@@ -1,4 +1,6 @@
 import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 from Ninja.engine import Engine
 from Ninja.game import Game
@@ -23,22 +25,21 @@ frame_duration = 1 / 30
 # Open camera
 engine.initCamera()
 
-with mp.solutions.hands.Hands(max_num_hands=2) as hands:
 # Game loop
-    while True:
-        t_start = time.time()
-        if engine.gameState == GameState.INGAME:
-            engine.gameLoop(hands)
-        else:
-            engine.menuLoop(hands)
-        t_end = time.time()
-        duration = t_end - t_start
-        engine.updateFPS(duration)
-        if duration < frame_duration:
-            time.sleep(frame_duration - duration)
+while True:
+    t_start = time.time()
+    if engine.gameState == GameState.INGAME:
+        engine.gameLoop()
+    else:
+        engine.menuLoop()
+    t_end = time.time()
+    duration = t_end - t_start
+    engine.updateFPS(duration)
+    if duration < frame_duration:
+        time.sleep(frame_duration - duration)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
 # Close camera & windows
 engine.stopCamera()
