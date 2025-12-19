@@ -96,6 +96,7 @@ class Engine:
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
+        self.image_height, self.image_width, _ = image.shape
 
         results = self.mediapipeProcessor.get_hands(image, hands)
 
@@ -141,19 +142,22 @@ class Engine:
         x = random.random() #between 0 and 1
         p = 0.05 * self.game.getDifficulty()
         if x < p:
-            obj = Object(type=None, position=(0, self.image_width))
+            obj = Object(type=None, width_image=self.image_width)
             self.objects.append(obj)
 
     def drawObjects(self,image):
+        rock = self.interface.rockMenuBGR
+        rock_alpha = self.interface.rockMenuAlpha
         for object in self.objects:
-            image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
-                               radius=object.radius, 
-                               color=object.color, 
-                               thickness=-1)
-            image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
-                               radius=object.radius+1, 
-                               color=(55,55,55), 
-                               thickness=1)
+            image = self.interface.putImageThere(image, rock, (int(object.position[0]),int(object.position[1])), rock_alpha)
+        #     image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
+        #                        radius=object.radius, 
+        #                        color=object.color, 
+        #                        thickness=-1)
+        #     image = cv2.circle(image, center=(int(object.position[0]),int(object.position[1])), 
+        #                        radius=object.radius+1, 
+        #                        color=(55,55,55), 
+        #                        thickness=1)
         return image
     
     def overlay_shape(self, image, landmark, shape_type='circle', color=(0, 0, 255), radius=5):
@@ -229,6 +233,5 @@ class Engine:
                 self.game.updateMulti()
                 ind_to_delete.append(ind)
 
-        for index in sorted(list(set(ind_to_delete)), reverse=True):
-            del self.objects[index]
+        self.objects = [x for i, x in enumerate(self.objects) if i not in ind_to_delete]
     

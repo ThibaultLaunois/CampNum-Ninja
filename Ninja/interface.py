@@ -45,7 +45,7 @@ class Interface:
         self.FPSposition = (self.menuThickness, self.windowHeight - self.menuThickness)
 
         #Objects for Interface
-        self.rockMenuBGR, self.rockMenuAlpha = self.initImageAlphaBlending(plt.imread("data/images/rock_1.png"), 0.03)
+        self.rockMenuBGR, self.rockMenuAlpha = self.initImageAlphaBlending(plt.imread("data/images/heart.png"), 1)
 
         #Interface
         self.menuInterface = self.designMenuInterface()
@@ -201,16 +201,23 @@ class Interface:
         #determine coordinates
         x, y = coordinates[0], coordinates[1]
         h, w, _ = bgr.shape
-        x_start = x - w // 2
-        x_end = x + w - w // 2
-        y_start = y - h // 2
-        y_end = y + h - h // 2
+        x_start = x - (w // 2)
+        x_end = x + w - (w // 2)
+        y_start = max(y - (h // 2), 0)
+        y_end = min(y + h - (h // 2), new_image.shape[0])
+        real_height = y_end - y_start
         
         #Alpha blending
-        new_image[y_start:y_end, x_start:x_end] = (
-            bgr * alpha[..., np.newaxis] + 
-            new_image[y_start:y_end, x_start:x_end] * (1 - alpha[..., np.newaxis])
-        )
+        if y_start == 0:
+            new_image[y_start:y_end, x_start:x_end] = (
+                bgr[h-real_height:, :] * alpha[h-real_height:, :, np.newaxis] + 
+                new_image[y_start:y_end, x_start:x_end] * (1 - alpha[h-real_height:, :, np.newaxis])
+            )
+        else:
+            new_image[y_start:y_end, x_start:x_end] = (
+                bgr[:(real_height), :] * alpha[:(real_height), :, np.newaxis] + 
+                new_image[y_start:y_end, x_start:x_end] * (1 - alpha[:(real_height), :, np.newaxis])
+            )
         return new_image
 
     def separateChannels(self, image):
