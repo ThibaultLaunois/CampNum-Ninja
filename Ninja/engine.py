@@ -38,6 +38,7 @@ class Engine:
         cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
 
     def mouse_click(self, event, x, y, flags, param):
+        #start Game
         if event == cv2.EVENT_LBUTTONDOWN:
             if (
                 x > self.interface.startBox[0][0] and 
@@ -46,7 +47,7 @@ class Engine:
                 y < self.interface.startBox[1][1]
             ):
                 self.startGame()
-
+        #Stop game
         if event == cv2.EVENT_LBUTTONDOWN:
             if (
                 x > self.interface.stopBox[0][0] and 
@@ -55,7 +56,7 @@ class Engine:
                 y < self.interface.stopBox[1][1]
             ):
                 self.endGame()
-        
+        #Close window
         if event == cv2.EVENT_LBUTTONDOWN:
             if (
                 x > self.interface.quitBox[0][0] and 
@@ -64,6 +65,24 @@ class Engine:
                 y < self.interface.quitBox[1][1]
             ):
                 self.close = True
+        #Increase difficulty
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.plusBox[0][0] and 
+                x < self.interface.plusBox[1][0] and 
+                y > self.interface.plusBox[0][1] and
+                y < self.interface.plusBox[1][1]
+            ):
+                self.game.increaseDifficulty()
+        #Decrease difficulty
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.minusBox[0][0] and 
+                x < self.interface.minusBox[1][0] and 
+                y > self.interface.minusBox[0][1] and
+                y < self.interface.minusBox[1][1]
+            ):
+                self.game.decreaseDifficulty()
 
 
     def startGame(self):
@@ -104,7 +123,7 @@ class Engine:
 
         # detect touch
         self.detectTouch(results)
-               
+        
         # Update position of objects
         self.updateObjectPositions()
 
@@ -118,7 +137,7 @@ class Engine:
         self.game.updateDuration()
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
+        self.interface.drawInterface(image, self.game, self.currentFPS)
 
         # End game if time's up
         if self.game.duration < 0:
@@ -142,7 +161,7 @@ class Engine:
         image = self.displayLandmark(image, results)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
+        self.interface.drawInterface(image, self.game, self.currentFPS)
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
