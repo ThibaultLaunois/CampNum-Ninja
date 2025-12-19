@@ -272,5 +272,5 @@ class Interface:
     
     def drawComboAndMulti(self, image, combo, multi):
         text = f"Combo: {combo} (x{multi})"
-        new_image = cv2.putText(image.copy(), text, (10,10), self.font, 1, self.textColor, 1)
+        new_image = cv2.putText(image.copy(), text, (40,40), self.font, 1, self.textColor, 1)
         return new_image

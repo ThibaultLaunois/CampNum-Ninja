@@ -140,7 +140,7 @@ class Engine:
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.01 * self.game.getDifficulty()
+        p = 0.05 * self.game.getDifficulty()
         if x < p:
             obj = Object(type=None, position=(0, self.image_width))
             self.objects.append(obj)
@@ -219,11 +219,15 @@ class Engine:
                     x_loc = hand_landmarks.landmark[9].x * self.image_width
                     y_loc = hand_landmarks.landmark[9].y * self.image_height
                     if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
+                        self.game.combo += 1
+                        self.game.updateMulti()
                         self.game.updateScore(5)
                         ind_to_delete.append(ind)
 
             # Store the indices of the objects that have left the frame
             if y > self.image_height:
+                self.game.combo = 0
+                self.game.updateMulti()
                 ind_to_delete.append(ind)
 
         for index in set(sorted(ind_to_delete, reverse=True)):
