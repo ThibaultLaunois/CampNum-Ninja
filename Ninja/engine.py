@@ -22,6 +22,7 @@ class Engine:
         self.validRadius = 5
         self.imageShape = False
         self.currentFPS = 30
+        self.close = False
 
     def updateFPS(self, duration):
         self.currentFPS = min(int(1/duration), 30)
@@ -37,6 +38,7 @@ class Engine:
         cv2.setMouseCallback(self.interface.nameWindow, self.mouse_click)
 
     def mouse_click(self, event, x, y, flags, param):
+        #start Game
         if event == cv2.EVENT_LBUTTONDOWN:
             if (
                 x > self.interface.startBox[0][0] and 
@@ -45,7 +47,7 @@ class Engine:
                 y < self.interface.startBox[1][1]
             ):
                 self.startGame()
-
+        #Stop game
         if event == cv2.EVENT_LBUTTONDOWN:
             if (
                 x > self.interface.stopBox[0][0] and 
@@ -54,11 +56,38 @@ class Engine:
                 y < self.interface.stopBox[1][1]
             ):
                 self.endGame()
+        #Close window
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.quitBox[0][0] and 
+                x < self.interface.quitBox[1][0] and 
+                y > self.interface.quitBox[0][1] and
+                y < self.interface.quitBox[1][1]
+            ):
+                self.close = True
+        #Increase difficulty
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.plusBox[0][0] and 
+                x < self.interface.plusBox[1][0] and 
+                y > self.interface.plusBox[0][1] and
+                y < self.interface.plusBox[1][1]
+            ):
+                self.game.increaseDifficulty()
+        #Decrease difficulty
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (
+                x > self.interface.minusBox[0][0] and 
+                x < self.interface.minusBox[1][0] and 
+                y > self.interface.minusBox[0][1] and
+                y < self.interface.minusBox[1][1]
+            ):
+                self.game.decreaseDifficulty()
 
 
     def startGame(self):
         self.gameState = GameState.INGAME
-        self.game = Game()
+        self.game = Game(difficulty=self.game.difficulty)
 
     def endGame(self):
         self.gameState = GameState.RECAPSCORE
@@ -78,25 +107,23 @@ class Engine:
         cv2.destroyAllWindows()
 
     def gameLoop(self, hands):
-
+        '''
+        Draws the interface when in game mode
+        
+        :param hands: hand detection object
+        '''
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
 
-        # Check if object to delete
-        # right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        # left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
-        # self.detectTouch(right_landmarks, left_landmarks)
-
         results = self.mediapipeProcessor.get_hands(image, hands)
 
-        # ---
-        #image = self.displayLandmark(image, results)
-        #self.detectTouchAll(results)
-        
-        image = self.detectTouchAllAndDisplay(results.multi_hand_landmarks, image)
-        
+        # display landmarks
+        image = self.displayLandmark(image, results)
 
+        # detect touch
+        self.detectTouch(results)
+        
         # Update position of objects
         self.updateObjectPositions()
 
@@ -106,31 +133,39 @@ class Engine:
         # Add object to current image
         image = self.drawObjects(image)
 
+        # Update duration left
+        self.game.updateDuration()
+
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
+        self.interface.drawInterface(image, self.game, self.currentFPS)
+
+        # End game if time's up
+        if self.game.duration < 0:
+            self.endGame()
 
     def menuLoop(self, hands):
-
+        '''
+        Draws the interface when not in game mode (start menu and after quit)
+        
+        :param hands: hand detection object
+        '''
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
         if (not self.imageShape) and (image is not None):
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
-        # Check if object to delete
-        #right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        #left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
 
         results = self.mediapipeProcessor.get_hands(image, hands)
 
         image = self.displayLandmark(image, results)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
+        self.interface.drawInterface(image, self.game, self.currentFPS)
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.1 * self.game.getDifficulty()
+        p = 0.02 * self.game.getDifficulty()
         if x < p:
             obj = Object(type=None, position=(0, self.image_width))
             self.objects.append(obj)
@@ -192,42 +227,7 @@ class Engine:
         return image
     
 
-    def detectTouchAllAndDisplay(self, results, image):
-        '''
-        Detect if the object is touched
-        
-        :param right_landmarks: landmarks detected for the right hand
-        :param left_landmarks: landmarks detected for the left hand
-        '''
-        ind_to_delete = []
-        for ind, object in enumerate(self.objects):     
-            x, y = object.position[0], object.position[1]
-            # Check if either hand has touched an object
-            if results:
-                for hand_landmarks in results:
-            # if results.multi_hand_landmarks:
-            #     for hand_landmarks in results.multi_hand_landmarks:
-                    # Detect touch
-                    x_loc = hand_landmarks.landmark[9].x * self.image_width
-                    y_loc = hand_landmarks.landmark[9].y * self.image_height
-                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
-                        self.game.updateScore(5)
-                        ind_to_delete.append(ind)
-                    
-                    # Display landmarks
-                    index_tip = hand_landmarks.landmark[9]
-                    image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
-
-            # Store the indices of the objects that have left the frame
-            if y > self.image_height:
-                ind_to_delete.append(ind)
-
-        for index in sorted(list(set(ind_to_delete)), reverse=True):
-            del self.objects[index]
-
-        return image
-    
-    def detectTouchAll(self, results):
+    def detectTouch(self, results):
         '''
         Detect if the object is touched
 
@@ -244,57 +244,17 @@ class Engine:
                     x_loc = hand_landmarks.landmark[9].x * self.image_width
                     y_loc = hand_landmarks.landmark[9].y * self.image_height
                     if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
+                        self.game.combo += 1
+                        self.game.updateMulti()
                         self.game.updateScore(5)
                         ind_to_delete.append(ind)
 
             # Store the indices of the objects that have left the frame
             if y > self.image_height:
+                self.game.combo = 0
+                self.game.updateMulti()
                 ind_to_delete.append(ind)
 
-        for index in set(sorted(ind_to_delete, reverse=True)):
+        for index in sorted(list(set(ind_to_delete)), reverse=True):
             del self.objects[index]
     
-
-    def detectTouch(self, right_landmarks, left_landmarks):
-        '''
-        Detect if the object is touched
-        
-        :param right_landmarks: landmarks detected for the right hand
-        :param left_landmarks: landmarks detected for the left hand
-        '''
-        ind_to_delete = []
-        for ind, object in enumerate(self.objects):     
-            x, y = object.position[0], object.position[1]
-            # Check if either hand has touched an object
-
-            
-            try:
-                x_loc = right_landmarks.landmark[9].x * self.image_width
-                y_loc = right_landmarks.landmark[9].y * self.image_height
-                if (((x - x_loc < object.radius) &
-                    (x + object.radius > x_loc) &
-                    (y - object.radius < y_loc) &
-                    (y + object.radius > y_loc))):
-                    self.game.updateScore(5)
-                    ind_to_delete.append(ind)
-            except:
-                pass
-
-            try:
-                x_loc = left_landmarks.landmark[9].x * self.image_width
-                y_loc = left_landmarks.landmark[9].y * self.image_height
-                if ((x - object.radius < x_loc) &
-                    (x + object.radius > x_loc) &
-                    (y - object.radius < y_loc) &
-                    (y + object.radius > y_loc)):
-                    self.game.updateScore(5)
-                    ind_to_delete.append(ind)
-            except:
-                pass
-
-            # Store the indices of the objects that have left the frame
-            if y > self.image_height:
-                ind_to_delete.append(ind)
-
-        for index in sorted(ind_to_delete, reverse=True):
-            del self.objects[index]
