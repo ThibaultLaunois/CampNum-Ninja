@@ -114,8 +114,15 @@ class Engine:
         # Add object to current image
         image = self.drawObjects(image)
 
+        # Update duration left
+        self.game.updateDuration()
+
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
+
+        # End game if time's up
+        if self.game.duration < 0:
+            self.endGame()
 
     def menuLoop(self, hands):
         '''
