@@ -24,8 +24,10 @@ class Game:
         :getDifficulty:
     """
 
-    def __init__(self, score=0, duration=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
+    def __init__(self, score=0, duration=0, combo=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
         self.score = score
+        self.combo = combo
+        self.scoreMulti = 1
         self.duration = duration
         self.gameMode = gameMode
         self.maxObjects = maxObjects
@@ -66,7 +68,11 @@ class Game:
         
         :param scoreToAdd (int): 
         """
-        self.score += scoreToAdd
+        self.score += scoreToAdd * self.scoreMulti
+
+    def updateMulti(self):
+        self.scoreMulti = min(1 + self.combo // 5, 4)
+        
 
     def updateDuration(self, newDuration):
         """
