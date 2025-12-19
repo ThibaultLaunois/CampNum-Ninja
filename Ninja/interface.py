@@ -110,10 +110,12 @@ class Interface:
         new_image = self.drawTextInBox(new_image, text, coordinates)
         return new_image
 
-    def drawInterface(self, image, score, FPS):
+    def drawInterface(self, image, score, FPS, combo, multi):
         base_image = self.drawScore(score)
         base_image = self.drawFPS(base_image, FPS)
+        base_image = self.drawComboAndMulti(base_image, combo, multi)
         base_image = self.drawVideo(base_image, image.copy())
+        
         cv2.imshow(self.nameWindow, base_image)
     
     def initImageAlphaBlending(self, image, scaleFactor=None):
@@ -215,4 +217,9 @@ class Interface:
     def drawFPS(self, image, FPS):
         text = f"FPS: {FPS}"
         new_image = cv2.putText(image.copy(), text, self.FPSposition, self.font, 1, self.textColor, 1)
+        return new_image
+    
+    def drawComboAndMulti(self, image, combo, multi):
+        text = f"Combo: {combo} (x{multi})"
+        new_image = cv2.putText(image.copy(), text, (10,10), self.font, 1, self.textColor, 1)
         return new_image

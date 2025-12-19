@@ -106,7 +106,7 @@ class Engine:
         image = self.drawObjects(image)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
+        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
 
     def menuLoop(self):
 
@@ -123,11 +123,11 @@ class Engine:
         image = self.displayLandmark(image, results)
 
         # Add interface on top of current image and show the result
-        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS)
+        self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.1 * self.game.getDifficulty()
+        p = 0.01 * self.game.getDifficulty()
         if x < p:
             # vel_x = np.random.randint(-300, 300)
             # vel_y = np.random.randint(-300, 300)
