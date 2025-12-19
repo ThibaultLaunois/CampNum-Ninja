@@ -88,7 +88,11 @@ class Engine:
         cv2.destroyAllWindows()
 
     def gameLoop(self, hands):
-
+        '''
+        Draws the interface when in game mode
+        
+        :param hands: hand detection object
+        '''
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
@@ -114,7 +118,11 @@ class Engine:
         self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
 
     def menuLoop(self, hands):
-
+        '''
+        Draws the interface when not in game mode (start menu and after quit)
+        
+        :param hands: hand detection object
+        '''
         # Get image
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
