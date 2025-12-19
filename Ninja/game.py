@@ -24,7 +24,7 @@ class Game:
         :getDifficulty:
     """
 
-    def __init__(self, score=0, duration=0, combo=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
+    def __init__(self, score=0, duration=60, combo=0, gameMode=gameMode.MATCH, maxObjects=3, difficulty=1, detectionRadius=1):
         self.score = score
         self.combo = combo
         self.scoreMulti = 1
@@ -34,18 +34,22 @@ class Game:
         self.difficulty = difficulty
         self.detectionRadius = detectionRadius
 
+    def updateDuration(self):
+        if self.duration > 0:
+            self.duration -= 1/30
+
     def increaseDifficulty(self):
         """
         Increase the difficulty by +1 if the current difficulty is smaller than 10.
-        The difficulty setting ranges from 1 to 10.
+        The difficulty setting ranges from 1 to 5.
         """
-        if self.getDifficulty() < 10:
+        if self.getDifficulty() < 5:
             self.difficulty += 1
 
     def decreaseDifficulty(self):
         """
         Decrease the difficulty by -1 if the current difficulty is greater than 1.
-        The difficulty setting ranges from 1 to 10.
+        The difficulty setting ranges from 1 to 5.
         """
         if self.getDifficulty() > 1:
             self.difficulty -= 1
@@ -72,15 +76,6 @@ class Game:
 
     def updateMulti(self):
         self.scoreMulti = min(1 + self.combo // 5, 4)
-        
-
-    def updateDuration(self, newDuration):
-        """
-        Update current duration with the new duration given.
-        
-        :param newDuration (float): 
-        """
-        self.duration = newDuration
 
     def getScore(self):
         """
