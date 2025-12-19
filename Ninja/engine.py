@@ -1,4 +1,5 @@
 from Ninja.game import Game
+from Ninja.gameMode import gameMode
 from Ninja.gameState import GameState
 from Ninja.interface import Interface
 from Ninja.mediapipeProcessor import mediapipeProcessor
@@ -6,6 +7,7 @@ from Ninja.Object import Object
 import random
 
 import cv2
+import numpy as np
 
 
 class Engine:
@@ -16,6 +18,7 @@ class Engine:
     def __init__(self, game:Game, interface:Interface, mediapipeProcessor:mediapipeProcessor):
         self.game = Game()
         self.interface = interface
+        self.gameMode = gameMode.PUSH
         self.gameState = GameState.MENU
         self.mediapipeProcessor = mediapipeProcessor
         self.objects = []
@@ -87,7 +90,7 @@ class Engine:
     def closeWindows(self):
         cv2.destroyAllWindows()
 
-    def gameLoop(self, hands):
+    def gameLoop(self, hands, results_prev = None):
         '''
         Draws the interface when in game mode
         
@@ -97,25 +100,45 @@ class Engine:
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
 
-        results = self.mediapipeProcessor.get_hands(image, hands)
+        if self.gameMode == gameMode.POP:
+            results = self.mediapipeProcessor.get_hands(image, hands)
 
-        # display landmarks
-        image = self.displayLandmark(image, results)
+            # display landmarks
+            image = self.displayLandmark(image, results)
 
-        # detect touch
-        self.detectTouch(results)
-               
-        # Update position of objects
-        self.updateObjectPositions()
+            # detect touch
+            self.detectTouchPop(results)
+                
+            # Update position of objects
+            self.updateObjectPositions()
 
-        # Randomly generate object (probability = 0.05 * difficulty)
-        self.RandomAddObject()
+            # Randomly generate object (probability = 0.05 * difficulty)
+            self.RandomAddObject()
+
+
+        elif self.gameMode == gameMode.PUSH:
+            results = self.mediapipeProcessor.get_hands(image, hands)
+
+            # display landmarks
+            image = self.displayLandmark(image, results)
+
+            # detect touch
+            self.detectTouchPush(results, results_prev)
+                
+            # Update position of objects
+            self.updateObjectPositions()
+
+            # Randomly generate object (probability = 0.05 * difficulty)
+            self.RandomAddObject()
         
         # Add object to current image
         image = self.drawObjects(image)
 
         # Add interface on top of current image and show the result
         self.interface.drawInterface(image, self.game.getScore(), self.currentFPS, self.game.combo, self.game.scoreMulti)
+
+        return results
+
 
     def menuLoop(self, hands):
         '''
@@ -139,9 +162,10 @@ class Engine:
 
     def RandomAddObject(self):
         x = random.random() #between 0 and 1
-        p = 0.05 * self.game.getDifficulty()
+        p = 0.01 * self.game.getDifficulty()
         if x < p:
-            obj = Object(type=None, position=(0, self.image_width))
+            radius = np.random.randint(10, 20)
+            obj = Object(type=None, position=(0, self.image_width), radius=radius)
             self.objects.append(obj)
 
     def drawObjects(self,image):
@@ -201,7 +225,7 @@ class Engine:
         return image
     
 
-    def detectTouch(self, results):
+    def detectTouchPop(self, results):
         '''
         Detect if the object is touched
 
@@ -231,4 +255,41 @@ class Engine:
 
         for index in sorted(list(set(ind_to_delete)), reverse=True):
             del self.objects[index]
+
+
+    def detectTouchPush(self, results, results_previous=None):
+        '''
+        Detect if the object is touched
+
+        :param right_landmarks: landmarks detected for the right hand
+        :param left_landmarks: landmarks detected for the left hand
+        '''
+
+        for ind, object in enumerate(self.objects):     
+            x, y = object.position[0], object.position[1]
+            # Check if either hand has touched an object
+            try:
+                lm1 = self.mediapipeProcessor.hand_landmarks_array(results_previous, 9)
+                lm2 = self.mediapipeProcessor.hand_landmarks_array(results, 9)
+
+                for ind_array, hand_landmarks in enumerate(results.multi_hand_landmarks):
+                    x_loc = hand_landmarks.landmark[9].x * self.image_width
+                    y_loc = hand_landmarks.landmark[9].y * self.image_height
+                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
+                        # print('touched object')
+                        # self.game.combo += 1
+                        # self.game.updateMulti()
+                        # self.game.updateScore(5)
+                        ind_prev = np.argmin(np.sum((lm2[ind_array,:]-lm1)**2, axis=1))
+                        vel = (self.objects[ind].radius * (lm2[ind_array, 0] - lm1[ind_prev, 0])* self.image_width, 
+                               self.objects[ind].radius * (lm2[ind_array, 1] - lm1[ind_prev, 1])* self.image_height)
+                        self.objects[ind].vitesse = vel
+                        
+            except:
+                pass
+
+
+            # # Store the indices of the objects that have left the frame
+            # if y > self.image_height:
+            #     self.endGame
     

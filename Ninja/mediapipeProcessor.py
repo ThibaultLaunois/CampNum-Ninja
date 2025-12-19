@@ -117,5 +117,23 @@ class mediapipeProcessor:
         res[:,1] = landmarks_dict["Y"]
         res[:,2] = landmarks_dict["Z"]
         return res
+    
+
+    def hand_landmarks_array(self, results, lm_num):
+        '''
+        Converts landmark dictionary to landmark array
+        
+        :param landmarks_dict: dictionary containing information about the
+                               landmarks
+        '''
+        lm = np.zeros(shape=(len(results.multi_hand_landmarks), 3))
+
+        for ind, hand_landmarks in enumerate(results.multi_hand_landmarks):
+
+            lm[ind,0] = hand_landmarks.landmark[lm_num].x
+            lm[ind,1] = hand_landmarks.landmark[lm_num].y 
+            lm[ind,2] = hand_landmarks.landmark[lm_num].z
+
+        return lm
 
     

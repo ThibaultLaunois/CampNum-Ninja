@@ -22,7 +22,7 @@ engine = Engine(game, interface, mediaPipeProcessor)
 frame_duration = 1 / 30
 # Open camera
 engine.initCamera()
-
+results = None
 with mp.solutions.hands.Hands(max_num_hands=2,
                               min_detection_confidence=0.5,
                               min_tracking_confidence=0.3) as hands:
@@ -30,7 +30,7 @@ with mp.solutions.hands.Hands(max_num_hands=2,
     while True:
         t_start = time.time()
         if engine.gameState == GameState.INGAME:
-            engine.gameLoop(hands)
+            results = engine.gameLoop(hands, results)
         else:
             engine.menuLoop(hands)
         t_end = time.time()
