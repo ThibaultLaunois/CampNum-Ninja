@@ -83,22 +83,14 @@ class Engine:
         _, image = self.camera.read()
         image = cv2.flip(image, 1)
 
-        # Check if object to delete
-        # right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        # left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
-        # self.detectTouch(right_landmarks, left_landmarks)
-
         results = self.mediapipeProcessor.get_hands(image, hands)
 
-        # ---
-        #image = self.displayLandmark(image, results)
-        #self.detectTouchAll(results)
-        
-        image = self.detectTouchAllAndDisplay(results.multi_hand_landmarks, image)
-        
-        # Show landmarks
+        # display landmarks
         image = self.displayLandmark(image, results)
-        
+
+        # detect touch
+        self.detectTouch(results)
+               
         # Update position of objects
         self.updateObjectPositions()
 
@@ -119,9 +111,6 @@ class Engine:
         if (not self.imageShape) and (image is not None):
             self.image_height, self.image_width, _ = image.shape
             self.imageShape = True
-        # Check if object to delete
-        #right_landmarks = self.mediapipeProcessor.get_right_hand_landmarks(image)
-        #left_landmarks = self.mediapipeProcessor.get_left_hand_landmarks(image)
 
         results = self.mediapipeProcessor.get_hands(image, hands)
 
@@ -194,46 +183,7 @@ class Engine:
         return image
     
 
-    def detectTouchAllAndDisplay(self, results, image):
-        '''
-        Detect if the object is touched
-        
-        :param right_landmarks: landmarks detected for the right hand
-        :param left_landmarks: landmarks detected for the left hand
-        '''
-        ind_to_delete = []
-        for ind, object in enumerate(self.objects):     
-            x, y = object.position[0], object.position[1]
-            # Check if either hand has touched an object
-            if results:
-                for hand_landmarks in results:
-            # if results.multi_hand_landmarks:
-            #     for hand_landmarks in results.multi_hand_landmarks:
-                    # Detect touch
-                    x_loc = hand_landmarks.landmark[9].x * self.image_width
-                    y_loc = hand_landmarks.landmark[9].y * self.image_height
-                    if ((x - x_loc) ** 2 + (y - y_loc) ** 2) < object.radius ** 2:
-                        self.game.updateScore(5)
-                        self.game.combo += 1
-                        self.game.updateMulti()
-                        ind_to_delete.append(ind)
-                    
-                    # Display landmarks
-                    # index_tip = hand_landmarks.landmark[9]
-                    # image = self.overlay_shape(image, index_tip, shape_type='circle', color=(255, 0, 0), radius=8)
-
-            # Store the indices of the objects that have left the frame
-            if y > self.image_height:
-                self.game.combo = 0
-                self.game.updateMulti()
-                ind_to_delete.append(ind)
-
-        for index in sorted(list(set(ind_to_delete)), reverse=True):
-            del self.objects[index]
-
-        return image
-    
-    def detectTouchAll(self, results):
+    def detectTouch(self, results):
         '''
         Detect if the object is touched
 
@@ -260,47 +210,3 @@ class Engine:
         for index in set(sorted(ind_to_delete, reverse=True)):
             del self.objects[index]
     
-
-    def detectTouch(self, right_landmarks, left_landmarks):
-        '''
-        Detect if the object is touched
-        
-        :param right_landmarks: landmarks detected for the right hand
-        :param left_landmarks: landmarks detected for the left hand
-        '''
-        ind_to_delete = []
-        for ind, object in enumerate(self.objects):     
-            x, y = object.position[0], object.position[1]
-            # Check if either hand has touched an object
-
-            
-            try:
-                x_loc = right_landmarks.landmark[9].x * self.image_width
-                y_loc = right_landmarks.landmark[9].y * self.image_height
-                if (((x - x_loc < object.radius) &
-                    (x + object.radius > x_loc) &
-                    (y - object.radius < y_loc) &
-                    (y + object.radius > y_loc))):
-                    self.game.updateScore(5)
-                    ind_to_delete.append(ind)
-            except:
-                pass
-
-            try:
-                x_loc = left_landmarks.landmark[9].x * self.image_width
-                y_loc = left_landmarks.landmark[9].y * self.image_height
-                if ((x - object.radius < x_loc) &
-                    (x + object.radius > x_loc) &
-                    (y - object.radius < y_loc) &
-                    (y + object.radius > y_loc)):
-                    self.game.updateScore(5)
-                    ind_to_delete.append(ind)
-            except:
-                pass
-
-            # Store the indices of the objects that have left the frame
-            if y > self.image_height:
-                ind_to_delete.append(ind)
-
-        for index in sorted(ind_to_delete, reverse=True):
-            del self.objects[index]
